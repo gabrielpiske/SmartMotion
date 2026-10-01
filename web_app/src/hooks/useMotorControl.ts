@@ -18,8 +18,9 @@ export function useMotorControl() {
     try {
       const db = getFirebaseDatabase();
       const commandRef = ref(db, MOTOR_CONTROL_PATH);
+      const statusRef = ref(db, "motorControl/status");
 
-      const unsubscribe = onValue(
+      const unsubCommand = onValue(
         commandRef,
         (snapshot) => {
           setIsConnected(true);
@@ -35,7 +36,20 @@ export function useMotorControl() {
         }
       );
 
-      return () => unsubscribe();
+      const unsubStatus = onValue(statusRef, (snapshot) => {
+        if (snapshot.exists()) {
+          const status = snapshot.val() as { speed?: SpeedLevel; emergency?: EmergencyState };
+          if (status.emergency === "ACTIVE") {
+            setEmergency("ACTIVE");
+            setCurrentSpeed(0);
+          }
+        }
+      });
+
+      return () => {
+        unsubCommand();
+        unsubStatus();
+      };
     } catch (e) {
       console.warn("Firebase not initialized:", e);
     }

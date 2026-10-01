@@ -29,3 +29,9 @@ declare module "next/types.js" {
 declare module "next/font/google" {
   export function Inter(options?: any): { className: string };
 }
+
+declare module "next/link" {
+  import { ComponentType, AnchorHTMLAttributes } from "react";
+  const Link: ComponentType<AnchorHTMLAttributes<HTMLAnchorElement> & { href: string; [key: string]: any }>;
+  export default Link;
+}

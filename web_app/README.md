@@ -66,9 +66,28 @@ Abra [http://localhost:3000](http://localhost:3000) no navegador (ou pelo IP da 
 
 ## 📱 Estrutura do App
 
-- **`src/app/page.tsx`**: Página principal mobile-first.
+- **`src/app/page.tsx`**: Interface mobile-first para os visitantes controlarem o motor pelo celular via QR Code.
+- **`src/app/dashboard-bancada/page.tsx`**: Painel administrativo/quiosque que fica aberto no notebook conectado ao Arduino via USB:
+  - **Ponte Web Serial:** Conecta diretamente ao Arduino a 115200 baud pelo navegador.
+  - **Sincronização Firebase:** Escuta `/motorControl/command` e grava a resposta do Arduino em `/motorControl/status`.
+  - **QR Code Interativo:** Gera um QR Code de alto contraste apontando para a interface mobile para os visitantes assumirem o controle.
+  - **Terminal Serial & Telemetria:** Exibe os estados dos 4 relés, velocidade real, botão de tela cheia e console de logs em tempo real.
 - **`src/components/SpeedControl.tsx`**: 4 botões de velocidade (Parado, Baixa, Média, Alta) com feedback visual ativo.
 - **`src/components/RelayDashboard.tsx`**: Dashboard animado com simulação de 4 relés (LEDs ON/OFF e fluxo para DI do Inversor).
 - **`src/components/EmergencyButton.tsx`**: Botão de parada imediata com confirmação em duas etapas para reset.
 - **`src/components/ConnectionStatus.tsx`**: Indicador visual do status de conexão com o Firebase.
-- **`src/hooks/useMotorControl.ts`**: Hook de sincronização em tempo real via Firebase Realtime Database (`/motorControl/command`).
+- **`src/hooks/useWebSerial.ts`**: Hook reutilizável da Web Serial API com tratamento de desconexão, buffering por quebra de linha (`\n`) e watchdog de segurança.
+- **`src/hooks/useMotorControl.ts`**: Hook de sincronização em tempo real via Firebase Realtime Database (`/motorControl/command` e `/motorControl/status`).
+
+---
+
+## 🎪 Fluxo de Uso na Feira
+
+1. Conecte o Arduino Uno via cabo USB ao notebook da bancada.
+2. Abra o Chrome/Edge no notebook e acesse a rota `/dashboard-bancada`.
+3. Clique em **"Conectar Arduino (USB)"** e selecione a porta serial do Arduino.
+4. Clique no botão de **Tela Cheia** para exibir o QR Code em destaque.
+5. Os visitantes apontam a câmera do celular para o QR Code e acessam a interface `/`.
+6. Quando o visitante aperta qualquer velocidade ou emergência:
+   `Celular (Visitante) → Firebase Realtime DB → Notebook (/dashboard-bancada) → Web Serial (115200 baud) → Arduino Uno → Relés (Active LOW) → Inversor de Frequência`
+7. A telemetria de retorno do Arduino (`STATUS:...`) é enviada de volta ao Firebase, sincronizando todos os celulares em tempo real!

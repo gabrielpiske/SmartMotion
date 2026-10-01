@@ -74,10 +74,16 @@ export default function Home() {
       </div>
 
       {/* Footer */}
-      <footer className="mt-8 text-center animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+      <footer className="mt-8 text-center animate-fade-in-up flex flex-col items-center gap-2" style={{ animationDelay: "0.2s" }}>
         <p className="text-[10px] text-slate-600">
           SENAI Timbó — Aprendizagem Industrial em Eletrônica
         </p>
+        <a
+          href="/dashboard-bancada"
+          className="text-[11px] text-slate-500 hover:text-blue-400 transition-colors py-1 px-2.5 rounded bg-slate-900/60 border border-slate-800"
+        >
+          🖥 Abrir Painel da Bancada (Gateway USB)
+        </a>
       </footer>
     </main>
   );

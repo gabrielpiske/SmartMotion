@@ -72,3 +72,55 @@ export const SPEED_CONFIG = [
     rpm: 1800,
   },
 ] as const;
+
+
+/** Estrutura da telemetria do Arduino salva em /motorControl/status */
+export interface MotorControlStatus {
+  raw: string;
+  speed: SpeedLevel;
+  r1: boolean;
+  r2: boolean;
+  r3: boolean;
+  r4: boolean;
+  emergency: EmergencyState;
+  updatedAt: number;
+}
+
+/** Utilitário para parsear a string de telemetria do Arduino */
+export function parseArduinoStatus(line: string): MotorControlStatus | null {
+  const trimmed = line.trim();
+  if (!trimmed.startsWith("STATUS:")) return null;
+
+  try {
+    const payload = trimmed.substring(7); // Remove "STATUS:"
+    const parts = payload.split(",");
+    const map: Record<string, string> = {};
+
+    for (const part of parts) {
+      const [key, val] = part.split("=");
+      if (key && val) {
+        map[key.trim().toUpperCase()] = val.trim().toUpperCase();
+      }
+    }
+
+    const speed = (parseInt(map["SPEED"] || "0", 10) as SpeedLevel) || 0;
+    const r1 = map["R1"] === "ON";
+    const r2 = map["R2"] === "ON";
+    const r3 = map["R3"] === "ON";
+    const r4 = map["R4"] === "ON";
+    const emergency: EmergencyState = map["EMERGENCY"] === "ACTIVE" ? "ACTIVE" : "CLEAR";
+
+    return {
+      raw: trimmed,
+      speed: (speed >= 0 && speed <= 3 ? speed : 0) as SpeedLevel,
+      r1,
+      r2,
+      r3,
+      r4,
+      emergency,
+      updatedAt: Date.now(),
+    };
+  } catch {
+    return null;
+  }
+}
