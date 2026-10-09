@@ -2,16 +2,21 @@
 
 import { useMotorControl } from "@/hooks/useMotorControl";
 import SpeedControl from "@/components/SpeedControl";
+import PowerDirectionControl from "@/components/PowerDirectionControl";
 import EmergencyButton from "@/components/EmergencyButton";
 import RelayDashboard from "@/components/RelayDashboard";
 import ConnectionStatus from "@/components/ConnectionStatus";
 
 export default function Home() {
   const {
+    power,
+    direction,
     currentSpeed,
     emergency,
     isConnected,
     isSending,
+    togglePower,
+    toggleDirection,
     setSpeed,
     activateEmergency,
     resetEmergency,
@@ -50,6 +55,17 @@ export default function Home() {
 
       {/* Conteúdo principal */}
       <div className="w-full flex flex-col gap-6 flex-1 animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+        
+        {/* Botão de Ligar/Desligar e Sentido de Giro */}
+        <PowerDirectionControl
+          power={power}
+          direction={direction}
+          emergency={emergency}
+          isSending={isSending}
+          onPowerToggle={togglePower}
+          onDirectionToggle={toggleDirection}
+        />
+
         {/* Botões de Velocidade */}
         <SpeedControl
           currentSpeed={currentSpeed}
@@ -60,6 +76,8 @@ export default function Home() {
 
         {/* Dashboard dos Relés */}
         <RelayDashboard
+          power={power}
+          direction={direction}
           currentSpeed={currentSpeed}
           emergency={emergency}
         />

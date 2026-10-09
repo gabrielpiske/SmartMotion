@@ -1,28 +1,49 @@
 "use client";
 
-import { SPEED_RELAY_MAP } from "@/lib/types";
-import type { SpeedLevel } from "@/lib/types";
+import type { SpeedLevel, DirectionState } from "@/lib/types";
 
 interface RelayDashboardProps {
+  power: boolean;
+  direction: DirectionState;
   currentSpeed: SpeedLevel;
   emergency: "ACTIVE" | "CLEAR";
 }
 
 const RELAY_LABELS = ["R1", "R2", "R3", "R4"];
-const RELAY_FUNCTIONS = ["Velocidade 1", "Velocidade 2", "Velocidade 3", "Reservado"];
+const RELAY_FUNCTIONS = ["Energia", "Sentido (Giro)", "Multispeed 1", "Multispeed 2"];
 
 export default function RelayDashboard({
+  power,
+  direction,
   currentSpeed,
   emergency,
 }: RelayDashboardProps) {
   const isEmergency = emergency === "ACTIVE";
-  // Na emergência, todos os relés desligam
+  
+  // Calculate relay states
+  const relay1 = power && !isEmergency;
+  const relay2 = relay1 && direction === "REV";
+  
+  let relay3 = false;
+  let relay4 = false;
+  
+  if (relay1) {
+    if (currentSpeed === 2) {
+      relay3 = true;
+    } else if (currentSpeed === 3) {
+      relay4 = true;
+    } else if (currentSpeed === 4) {
+      relay3 = true;
+      relay4 = true;
+    }
+  }
+
   const relayStates = isEmergency
     ? [false, false, false, false]
-    : SPEED_RELAY_MAP[currentSpeed];
+    : [relay1, relay2, relay3, relay4];
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto mb-4">
       <h2 className="text-sm font-semibold uppercase tracking-widest text-slate-400 mb-3 text-center">
         Estado dos Relés
       </h2>
@@ -110,7 +131,7 @@ export default function RelayDashboard({
               ${
                 isEmergency
                   ? "bg-red-500/20 text-red-400 border border-red-500/30"
-                  : currentSpeed > 0
+                  : power
                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                     : "bg-slate-700/50 text-slate-400 border border-slate-600/30"
               }
@@ -122,7 +143,7 @@ export default function RelayDashboard({
                 ${
                   isEmergency
                     ? "bg-red-500 animate-pulse"
-                    : currentSpeed > 0
+                    : power
                       ? "bg-emerald-400 animate-pulse"
                       : "bg-slate-500"
                 }
@@ -130,9 +151,9 @@ export default function RelayDashboard({
             />
             {isEmergency
               ? "Emergência — Motor bloqueado"
-              : currentSpeed > 0
-                ? `Motor ativo — Velocidade ${currentSpeed}`
-                : "Motor parado"}
+              : power
+                ? `Motor ativo — ${direction === "FWD" ? "Horário" : "Anti-horário"} — Vel ${currentSpeed}`
+                : "Motor desligado"}
           </div>
         </div>
       </div>

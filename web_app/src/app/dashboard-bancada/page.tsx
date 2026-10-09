@@ -10,6 +10,7 @@ import {
   type MotorControlCommand,
   type MotorControlStatus,
   type SpeedLevel,
+  type DirectionState,
   parseArduinoStatus,
   SPEED_CONFIG,
 } from "@/lib/types";
@@ -29,7 +30,10 @@ export default function DashboardBancadaPage() {
 
   const lastProcessedTimestampRef = useRef<number>(0);
   const lastEmergencyStateRef = useRef<"ACTIVE" | "CLEAR">("CLEAR");
-  const currentSpeedRef = useRef<SpeedLevel>(0);
+  
+  const currentPowerRef = useRef<boolean>(false);
+  const currentDirectionRef = useRef<DirectionState>("FWD");
+  const currentSpeedRef = useRef<SpeedLevel>(1);
   const currentEmergencyRef = useRef<"ACTIVE" | "CLEAR">("CLEAR");
 
   // Callback ao receber linha da Serial (Arduino -> Navegador)
@@ -68,6 +72,8 @@ export default function DashboardBancadaPage() {
   // Atualiza referências quando status do comando muda
   useEffect(() => {
     if (lastCommand) {
+      currentPowerRef.current = lastCommand.power;
+      currentDirectionRef.current = lastCommand.direction;
       currentSpeedRef.current = lastCommand.speed;
       currentEmergencyRef.current = lastCommand.emergency;
     }
@@ -134,9 +140,13 @@ export default function DashboardBancadaPage() {
                     lastEmergencyStateRef.current = "CLEAR";
                   }
 
+                  // Envia comandos de estado
+                  send(`CMD:POWER:${cmd.power ? "ON" : "OFF"}`);
+                  send(`CMD:DIR:${cmd.direction}`);
                   const commandStr = `CMD:SPEED:${cmd.speed}`;
                   send(commandStr);
-                  setLastSentCommand(commandStr);
+                  
+                  setLastSentCommand(`PWR:${cmd.power ? "ON" : "OFF"} | DIR:${cmd.direction} | SPD:${cmd.speed}`);
                 }
               }
             }
@@ -165,6 +175,7 @@ export default function DashboardBancadaPage() {
       if (currentEmergencyRef.current === "ACTIVE") {
         send("CMD:EMERGENCY");
       } else {
+        // Reenvia apenas um comando para manter vivo
         send(`CMD:SPEED:${currentSpeedRef.current}`);
       }
     }, 2000);
@@ -182,12 +193,20 @@ export default function DashboardBancadaPage() {
   };
 
   const activeSpeedConfig = SPEED_CONFIG.find(
-    (s) => s.level === (arduinoStatus ? arduinoStatus.speed : (lastCommand?.speed ?? 0))
+    (s) => s.level === (arduinoStatus ? arduinoStatus.speed : (lastCommand?.speed ?? 1))
   ) || SPEED_CONFIG[0];
 
   const isEmergencyActive = arduinoStatus
     ? arduinoStatus.emergency === "ACTIVE"
     : lastCommand?.emergency === "ACTIVE";
+
+  const isPowerOn = arduinoStatus
+    ? arduinoStatus.power
+    : lastCommand?.power ?? false;
+
+  const currentDirection = arduinoStatus
+    ? arduinoStatus.direction
+    : lastCommand?.direction ?? "FWD";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between overflow-x-hidden font-sans select-none">
@@ -380,12 +399,12 @@ export default function DashboardBancadaPage() {
                 className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                   isEmergencyActive
                     ? "bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse"
-                    : activeSpeedConfig.level > 0
+                    : isPowerOn
                     ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
                     : "bg-slate-800 text-slate-400 border border-slate-700"
                 }`}
               >
-                {isEmergencyActive ? "EMERGÊNCIA ATIVA" : activeSpeedConfig.level > 0 ? "MOTOR EM GIRO" : "MOTOR PARADO"}
+                {isEmergencyActive ? "EMERGÊNCIA ATIVA" : isPowerOn ? "MOTOR LIGADO" : "MOTOR PARADO"}
               </span>
             </div>
 
@@ -403,9 +422,10 @@ export default function DashboardBancadaPage() {
                   </span>
                 </div>
                 <p className="text-xs text-slate-400 mt-0.5">
+                  Giro: <strong className="text-slate-200">{currentDirection === "FWD" ? "Horário" : "Anti-horário"}</strong>, 
                   Frequência ajustada para aprox.{" "}
                   <strong className="text-slate-200">
-                    {activeSpeedConfig.rpm > 0 ? `${activeSpeedConfig.rpm} RPM` : "0 RPM (Repouso)"}
+                    {activeSpeedConfig.rpm > 0 ? `${activeSpeedConfig.rpm} Hz/RPM` : "0 (Repouso)"}
                   </strong>
                 </p>
               </div>
@@ -423,10 +443,10 @@ export default function DashboardBancadaPage() {
 
             <div className="grid grid-cols-4 gap-2.5">
               {[
-                { name: "R1", pin: "Pin 2", role: "DI1 (Start/Vel 1)", on: arduinoStatus?.r1 ?? false },
-                { name: "R2", pin: "Pin 3", role: "DI2 (Vel 2)", on: arduinoStatus?.r2 ?? false },
-                { name: "R3", pin: "Pin 4", role: "DI3 (Vel 3)", on: arduinoStatus?.r3 ?? false },
-                { name: "R4", pin: "Pin 5", role: "DI4 (Reserv.)", on: arduinoStatus?.r4 ?? false },
+                { name: "R1", pin: "Pin 2", role: "DI1 (Energia)", on: arduinoStatus?.r1 ?? false },
+                { name: "R2", pin: "Pin 3", role: "DI2 (Giro)", on: arduinoStatus?.r2 ?? false },
+                { name: "R3", pin: "Pin 4", role: "DI3 (Multisp 1)", on: arduinoStatus?.r3 ?? false },
+                { name: "R4", pin: "Pin 5", role: "DI4 (Multisp 2)", on: arduinoStatus?.r4 ?? false },
               ].map((relay) => (
                 <div
                   key={relay.name}

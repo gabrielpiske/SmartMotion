@@ -3,12 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { ref, set, onValue } from "firebase/database";
 import { getFirebaseDatabase } from "@/lib/firebase";
-import type { SpeedLevel, EmergencyState, MotorControlCommand } from "@/lib/types";
+import type { SpeedLevel, EmergencyState, DirectionState, MotorControlCommand } from "@/lib/types";
 
 const MOTOR_CONTROL_PATH = "motorControl/command";
 
 export function useMotorControl() {
-  const [currentSpeed, setCurrentSpeed] = useState<SpeedLevel>(0);
+  const [power, setPower] = useState<boolean>(false);
+  const [direction, setDirection] = useState<DirectionState>("FWD");
+  const [currentSpeed, setCurrentSpeed] = useState<SpeedLevel>(1);
   const [emergency, setEmergency] = useState<EmergencyState>("CLEAR");
   const [isConnected, setIsConnected] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -26,8 +28,10 @@ export function useMotorControl() {
           setIsConnected(true);
           if (snapshot.exists()) {
             const data = snapshot.val() as MotorControlCommand;
-            setCurrentSpeed(data.speed);
-            setEmergency(data.emergency);
+            setPower(data.power ?? false);
+            setDirection(data.direction ?? "FWD");
+            setCurrentSpeed(data.speed ?? 1);
+            setEmergency(data.emergency ?? "CLEAR");
           }
         },
         (error) => {
@@ -38,10 +42,10 @@ export function useMotorControl() {
 
       const unsubStatus = onValue(statusRef, (snapshot) => {
         if (snapshot.exists()) {
-          const status = snapshot.val() as { speed?: SpeedLevel; emergency?: EmergencyState };
+          const status = snapshot.val() as { power?: boolean; direction?: DirectionState; speed?: SpeedLevel; emergency?: EmergencyState };
           if (status.emergency === "ACTIVE") {
             setEmergency("ACTIVE");
-            setCurrentSpeed(0);
+            setPower(false);
           }
         }
       });
@@ -55,69 +59,55 @@ export function useMotorControl() {
     }
   }, []);
 
-  // Envia comando de velocidade
-  const setSpeed = useCallback(
-    async (speed: SpeedLevel) => {
-      if (emergency === "ACTIVE") return; // Bloqueado durante emergência
-      setIsSending(true);
-      try {
-        const db = getFirebaseDatabase();
-        const command: MotorControlCommand = {
-          speed,
-          emergency: "CLEAR",
-          timestamp: Date.now(),
-        };
-        await set(ref(db, MOTOR_CONTROL_PATH), command);
-      } catch (error) {
-        console.error("Failed to set speed:", error);
-      } finally {
-        setIsSending(false);
-      }
-    },
-    [emergency]
-  );
+  const sendCommand = async (updates: Partial<MotorControlCommand>) => {
+    if (emergency === "ACTIVE" && updates.emergency !== "CLEAR") return; // Bloqueado durante emergência
+    setIsSending(true);
+    try {
+      const db = getFirebaseDatabase();
+      const command: MotorControlCommand = {
+        power: updates.power !== undefined ? updates.power : power,
+        direction: updates.direction !== undefined ? updates.direction : direction,
+        speed: updates.speed !== undefined ? updates.speed : currentSpeed,
+        emergency: updates.emergency !== undefined ? updates.emergency : emergency,
+        timestamp: Date.now(),
+      };
+      await set(ref(db, MOTOR_CONTROL_PATH), command);
+    } catch (error) {
+      console.error("Failed to set command:", error);
+    } finally {
+      setIsSending(false);
+    }
+  };
 
-  // Ativa emergência
+  const togglePower = useCallback(async () => {
+    await sendCommand({ power: !power });
+  }, [power, direction, currentSpeed, emergency]);
+
+  const toggleDirection = useCallback(async () => {
+    await sendCommand({ direction: direction === "FWD" ? "REV" : "FWD" });
+  }, [power, direction, currentSpeed, emergency]);
+
+  const setSpeed = useCallback(async (speed: SpeedLevel) => {
+    await sendCommand({ speed });
+  }, [power, direction, currentSpeed, emergency]);
+
   const activateEmergency = useCallback(async () => {
-    setIsSending(true);
-    try {
-      const db = getFirebaseDatabase();
-      const command: MotorControlCommand = {
-        speed: 0,
-        emergency: "ACTIVE",
-        timestamp: Date.now(),
-      };
-      await set(ref(db, MOTOR_CONTROL_PATH), command);
-    } catch (error) {
-      console.error("Failed to activate emergency:", error);
-    } finally {
-      setIsSending(false);
-    }
-  }, []);
+    await sendCommand({ power: false, emergency: "ACTIVE" });
+  }, [direction, currentSpeed]);
 
-  // Reseta emergência
   const resetEmergency = useCallback(async () => {
-    setIsSending(true);
-    try {
-      const db = getFirebaseDatabase();
-      const command: MotorControlCommand = {
-        speed: 0,
-        emergency: "CLEAR",
-        timestamp: Date.now(),
-      };
-      await set(ref(db, MOTOR_CONTROL_PATH), command);
-    } catch (error) {
-      console.error("Failed to reset emergency:", error);
-    } finally {
-      setIsSending(false);
-    }
-  }, []);
+    await sendCommand({ power: false, emergency: "CLEAR" });
+  }, [direction, currentSpeed]);
 
   return {
+    power,
+    direction,
     currentSpeed,
     emergency,
     isConnected,
     isSending,
+    togglePower,
+    toggleDirection,
     setSpeed,
     activateEmergency,
     resetEmergency,
