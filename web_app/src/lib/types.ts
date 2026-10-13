@@ -34,18 +34,6 @@ export const SPEED_CONFIG = [
   },
   {
     level: 2 as SpeedLevel,
-    label: "Média Baixa",
-    sublabel: "Velocidade 2",
-    icon: "🚶",
-    color: "from-lime-500 to-lime-600",
-    activeColor: "from-lime-400 to-lime-500",
-    borderColor: "border-lime-400",
-    glowColor: "shadow-lime-500/40",
-    textColor: "text-lime-100",
-    rpm: 50,
-  },
-  {
-    level: 3 as SpeedLevel,
     label: "Média Alta",
     sublabel: "Velocidade 3",
     icon: "🏃",
@@ -55,6 +43,18 @@ export const SPEED_CONFIG = [
     glowColor: "shadow-amber-500/40",
     textColor: "text-amber-100",
     rpm: 75,
+  },
+  {
+    level: 3 as SpeedLevel,
+    label: "Média Baixa",
+    sublabel: "Velocidade 2",
+    icon: "🚶",
+    color: "from-lime-500 to-lime-600",
+    activeColor: "from-lime-400 to-lime-500",
+    borderColor: "border-lime-400",
+    glowColor: "shadow-lime-500/40",
+    textColor: "text-lime-100",
+    rpm: 50,
   },
   {
     level: 4 as SpeedLevel,
@@ -69,7 +69,6 @@ export const SPEED_CONFIG = [
     rpm: 120,
   },
 ] as const;
-
 
 /** Estrutura da telemetria do Arduino salva em /motorControl/status */
 export interface MotorControlStatus {
@@ -109,7 +108,8 @@ export function parseArduinoStatus(line: string): MotorControlStatus | null {
     const r2 = map["R2"] === "ON";
     const r3 = map["R3"] === "ON";
     const r4 = map["R4"] === "ON";
-    const emergency: EmergencyState = map["EMERGENCY"] === "ACTIVE" ? "ACTIVE" : "CLEAR";
+    const emergency: EmergencyState =
+      map["EMERGENCY"] === "ACTIVE" ? "ACTIVE" : "CLEAR";
 
     return {
       raw: trimmed,
