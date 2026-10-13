@@ -29,9 +29,9 @@ export default function RelayDashboard({
   
   if (relay1) {
     if (currentSpeed === 2) {
-      relay3 = true;
+      relay4 = true; // Na bancada física, Velocidade 2 (30Hz) ativa o Relé 4
     } else if (currentSpeed === 3) {
-      relay4 = true;
+      relay3 = true; // Na bancada física, Velocidade 3 (45Hz) ativa o Relé 3
     } else if (currentSpeed === 4) {
       relay3 = true;
       relay4 = true;

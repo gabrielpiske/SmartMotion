@@ -192,28 +192,45 @@ export function useWebSerial({
     addLog("info", "Porta serial desconectada.");
   }, [addLog]);
 
-  // Enviar comando para o Arduino
+  const writeQueueRef = useRef<Promise<void>>(Promise.resolve());
+
+  // Enviar comando para o Arduino com Fila Atômica Sequencial (evita stream lock)
   const send = useCallback(
-    async (command: string) => {
-      const port = portRef.current;
-      if (!port || !port.writable) {
-        addLog("error", "Não foi possível enviar: porta não conectada ou não gravável.");
-        return false;
-      }
+    (command: string): Promise<boolean> => {
+      return new Promise<boolean>((resolve) => {
+        writeQueueRef.current = writeQueueRef.current
+          .then(async () => {
+            const port = portRef.current;
+            if (!port || !port.writable) {
+              addLog("error", "Não foi possível enviar: porta não conectada ou não gravável.");
+              resolve(false);
+              return;
+            }
 
-      const text = command.endsWith("\n") ? command : command + "\n";
-      const data = new TextEncoder().encode(text);
+            const text = command.endsWith("\n") ? command : command + "\n";
+            const data = new TextEncoder().encode(text);
 
-      try {
-        const writer = port.writable.getWriter();
-        await writer.write(data);
-        writer.releaseLock();
-        addLog("out", command.trim());
-        return true;
-      } catch (err) {
-        addLog("error", `Erro ao enviar comando: ${(err as Error).message}`);
-        return false;
-      }
+            try {
+              const writer = port.writable.getWriter();
+              try {
+                await writer.write(data);
+              } finally {
+                writer.releaseLock();
+              }
+              addLog("out", command.trim());
+              // Pausa segura de 30ms para o buffer e microcontrolador processarem
+              await new Promise((r) => setTimeout(r, 30));
+              resolve(true);
+            } catch (err) {
+              addLog("error", `Erro ao enviar comando: ${(err as Error).message}`);
+              resolve(false);
+            }
+          })
+          .catch((err) => {
+            addLog("error", `Erro na fila serial: ${(err as Error).message}`);
+            resolve(false);
+          });
+      });
     },
     [addLog]
   );

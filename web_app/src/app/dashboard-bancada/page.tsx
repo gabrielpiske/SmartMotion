@@ -15,6 +15,20 @@ import {
   SPEED_CONFIG,
 } from "@/lib/types";
 
+// Mapeia velocidade lógica (UI) -> velocidade de hardware (Arduino)
+// Na bancada física, os relés R3 e R4 acionam as velocidades 2 e 3 invertidas
+const toHardwareSpeed = (speed: SpeedLevel): number => {
+  if (speed === 2) return 3;
+  if (speed === 3) return 2;
+  return speed;
+};
+
+const fromHardwareSpeed = (hwSpeed: number): SpeedLevel => {
+  if (hwSpeed === 2) return 3;
+  if (hwSpeed === 3) return 2;
+  return (hwSpeed >= 1 && hwSpeed <= 4 ? hwSpeed : 1) as SpeedLevel;
+};
+
 export default function DashboardBancadaPage() {
   const [controlUrl, setControlUrl] = useState("");
   const [isEditingUrl, setIsEditingUrl] = useState(false);
@@ -36,15 +50,24 @@ export default function DashboardBancadaPage() {
   const currentSpeedRef = useRef<SpeedLevel>(1);
   const currentEmergencyRef = useRef<"ACTIVE" | "CLEAR">("CLEAR");
 
+  const lastSentPowerRef = useRef<boolean | null>(null);
+  const lastSentDirRef = useRef<DirectionState | null>(null);
+  const lastSentSpeedRef = useRef<SpeedLevel | null>(null);
+
   // Callback ao receber linha da Serial (Arduino -> Navegador)
   const handleSerialLine = useCallback((line: string) => {
     const parsed = parseArduinoStatus(line);
     if (parsed) {
-      setArduinoStatus(parsed);
+      // Ajusta velocidade de hardware para velocidade lógica da UI
+      const corrected: MotorControlStatus = {
+        ...parsed,
+        speed: fromHardwareSpeed(parsed.speed),
+      };
+      setArduinoStatus(corrected);
       // Salva no nó /motorControl/status do Firebase
       try {
         const db = getFirebaseDatabase();
-        set(ref(db, "motorControl/status"), parsed).catch((err) => {
+        set(ref(db, "motorControl/status"), corrected).catch((err) => {
           console.error("Falha ao salvar status no Firebase:", err);
         });
       } catch (err) {
@@ -133,6 +156,7 @@ export default function DashboardBancadaPage() {
                   send(commandStr);
                   setLastSentCommand(commandStr);
                   lastEmergencyStateRef.current = "ACTIVE";
+                  lastSentPowerRef.current = false;
                 } else {
                   // Se estava em emergência e agora foi limpo, envia reset antes
                   if (lastEmergencyStateRef.current === "ACTIVE" && cmd.emergency === "CLEAR") {
@@ -140,13 +164,26 @@ export default function DashboardBancadaPage() {
                     lastEmergencyStateRef.current = "CLEAR";
                   }
 
-                  // Envia comandos de estado
-                  send(`CMD:POWER:${cmd.power ? "ON" : "OFF"}`);
-                  send(`CMD:DIR:${cmd.direction}`);
-                  const commandStr = `CMD:SPEED:${cmd.speed}`;
-                  send(commandStr);
+                  // Envia Power se mudou
+                  if (lastSentPowerRef.current !== cmd.power) {
+                    send(`CMD:POWER:${cmd.power ? "ON" : "OFF"}`);
+                    lastSentPowerRef.current = cmd.power;
+                  }
+
+                  // Envia Direção se mudou
+                  if (lastSentDirRef.current !== cmd.direction) {
+                    send(`CMD:DIR:${cmd.direction}`);
+                    lastSentDirRef.current = cmd.direction;
+                  }
+
+                  // Envia Velocidade (com mapeamento se relés 2 e 3 estiverem trocados na bancada)
+                  if (lastSentSpeedRef.current !== cmd.speed || !cmd.power) {
+                    const hwSpeed = toHardwareSpeed(cmd.speed);
+                    send(`CMD:SPEED:${hwSpeed}`);
+                    lastSentSpeedRef.current = cmd.speed;
+                  }
                   
-                  setLastSentCommand(`PWR:${cmd.power ? "ON" : "OFF"} | DIR:${cmd.direction} | SPD:${cmd.speed}`);
+                  setLastSentCommand(`PWR:${cmd.power ? "ON" : "OFF"} | DIR:${cmd.direction} | SPD:${cmd.speed} (HW:${toHardwareSpeed(cmd.speed)})`);
                 }
               }
             }
@@ -175,8 +212,9 @@ export default function DashboardBancadaPage() {
       if (currentEmergencyRef.current === "ACTIVE") {
         send("CMD:EMERGENCY");
       } else {
-        // Reenvia apenas um comando para manter vivo
-        send(`CMD:SPEED:${currentSpeedRef.current}`);
+        // Reenvia velocidade atual mapeada para o hardware
+        const hwSpeed = toHardwareSpeed(currentSpeedRef.current);
+        send(`CMD:SPEED:${hwSpeed}`);
       }
     }, 2000);
 
