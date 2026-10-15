@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import Link from "next/link";
 import { getFirebaseDatabase } from "@/lib/firebase";
 import { useWebSerial } from "@/hooks/useWebSerial";
+import MediaPlaceholder from "@/components/MediaPlaceholder";
 import {
   type MotorControlCommand,
   type MotorControlStatus,
@@ -247,26 +248,32 @@ export default function DashboardBancadaPage() {
     : lastCommand?.direction ?? "FWD";
 
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col justify-between overflow-x-hidden font-sans select-none">
-      {/* BARRA SUPERIOR / STATUS DA BANCADA */}
-      <header className="w-full bg-slate-900/80 backdrop-blur-md border-b border-slate-800/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-4">
+    <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col overflow-x-hidden font-sans select-none">
+      {/* ================================================================
+          CABEÇALHO FIXO — identidade SENAI + navegação + status da bancada
+          (os indicadores e botões de hardware são os originais, intactos)
+          ================================================================ */}
+      <header className="sticky top-0 z-50 w-full bg-[#04172f]/85 backdrop-blur-md border-b border-white/10 px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-4">
         {/* Identificação do Projeto */}
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-500 flex items-center justify-center shadow-lg shadow-blue-500/20">
-            <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
-            </svg>
+        <a href="#inicio" className="flex items-center gap-3">
+          <span className="flex items-center rounded-md bg-[#e30613] px-2.5 py-1 text-sm font-black italic tracking-tight text-white shadow-lg shadow-red-900/30">
+            SENAI
+          </span>
+          <div className="leading-tight">
+            <p className="text-base font-extrabold tracking-tight text-white">
+              Smart<span className="text-[#3d8bfd]">Motion</span>
+            </p>
+            <p className="text-[11px] text-slate-400">Mundo SENAI • SENAI Timbó</p>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-base font-extrabold tracking-tight text-white">SmartDrive</h1>
-              <span className="text-[10px] font-semibold uppercase px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                Gateway Bancada
-              </span>
-            </div>
-            <p className="text-xs text-slate-400">SENAI Timbó • Mundo SENAI</p>
-          </div>
-        </div>
+        </a>
+
+        {/* Navegação da landing page */}
+        <nav className="hidden xl:flex items-center gap-1 text-sm font-semibold text-slate-300">
+          <a href="#como-funciona" className="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Como funciona</a>
+          <a href="#experimente" className="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Experimente</a>
+          <a href="#eletronica" className="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">A Eletrônica</a>
+          <a href="#quem-somos" className="px-3 py-2 rounded-lg hover:bg-white/5 hover:text-white transition">Quem somos</a>
+        </nav>
 
         {/* Indicadores de Conexão e Ações de Hardware */}
         <div className="flex items-center gap-3">
@@ -352,262 +359,656 @@ export default function DashboardBancadaPage() {
         </div>
       )}
 
-      {/* ÁREA CENTRAL - MODO EXIBIÇÃO FEIRA / QR CODE */}
-      <main className="flex-1 flex flex-col lg:flex-row items-center justify-center p-6 gap-8 max-w-7xl mx-auto w-full">
-        {/* COLUNA ESQUERDA: QR CODE GIGANTE PARA VISITANTES */}
-        <div className="flex-1 flex flex-col items-center justify-center text-center max-w-lg w-full">
-          {/* Badge Chamativa */}
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-purple-500/20 border border-blue-400/30 text-blue-300 text-xs font-bold uppercase tracking-wider mb-4 animate-pulse">
-            <span>✨ Experiência Interativa</span>
+      {/* ================================================================
+          1. HERO — BOAS-VINDAS AO MUNDO SENAI
+          ================================================================ */}
+      <section id="inicio" className="relative hero-bg overflow-hidden">
+        {/* Imagem de fundo (troque por um vídeo em loop se desejar) */}
+        <div
+          aria-hidden
+          className="absolute inset-0 bg-cover bg-center opacity-[0.12] mix-blend-luminosity"
+          style={{ backgroundImage: "url('/smartmotion_banner.jpg')" }}
+        />
+        <div aria-hidden className="absolute inset-0 bg-tech-grid" />
+
+        <div className="relative max-w-7xl mx-auto px-6 py-16 sm:py-20 lg:py-28 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center min-h-[80vh]">
+          <div className="animate-fade-in-up">
+            <span className="senai-stripe mb-6" />
+            <p className="section-eyebrow text-[#7fb2ff] mb-4">Bem-vindo ao Mundo SENAI</p>
+
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.05]">
+              Controle uma máquina de verdade{" "}
+              <span className="bg-gradient-to-r from-[#7fb2ff] to-white bg-clip-text text-transparent">
+                com o seu celular.
+              </span>
+            </h1>
+
+            <p className="mt-6 text-lg sm:text-xl text-slate-300 leading-relaxed max-w-xl">
+              Um toque na tela e um motor industrial ganha vida bem na sua frente.
+              Descubra como a eletrônica transforma um simples comando digital em
+              movimento real.
+            </p>
+
+            <div className="mt-9 flex flex-wrap gap-4">
+              <a href="#experimente" className="btn-senai">
+                Experimente agora
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                </svg>
+              </a>
+              <a href="#como-funciona" className="btn-ghost">Como funciona?</a>
+            </div>
+
+            {/* Resumo visual do caminho da mensagem */}
+            <div className="mt-10 flex flex-wrap items-center gap-3 text-sm font-semibold text-slate-200">
+              <span className="flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-4 py-2">📱 Seu celular</span>
+              <span className="flow-arrow text-[#e30613] font-black">➜</span>
+              <span className="flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-4 py-2">🧠 O cérebro eletrônico</span>
+              <span className="flow-arrow text-[#e30613] font-black">➜</span>
+              <span className="flex items-center gap-2 rounded-full bg-white/10 border border-white/10 px-4 py-2">⚙️ A máquina</span>
+            </div>
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-2">
-            Escaneie para assumir o controle!
-          </h2>
+          {/* Espaço para vídeo em loop do motor */}
+          <div className="relative animate-fade-in-up" style={{ animationDelay: "0.15s" }}>
+            <div aria-hidden className="absolute -inset-6 rounded-[2rem] bg-[#3d8bfd]/20 blur-3xl" />
+            <div className="relative float-slow">
+              <MediaPlaceholder
+                kind="video"
+                tone="dark"
+                label="Vídeo: o motor acelerando e desacelerando"
+                hint="Insira aqui um vídeo curto em loop gravado no laboratório."
+                aspectClassName="aspect-[4/3]"
+                className="shadow-2xl shadow-black/40"
+              />
+              <div className="absolute -bottom-5 -left-4 sm:-left-8 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-slate-900 shadow-xl">
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e30613] text-xl">⚡</span>
+                <div className="leading-tight">
+                  <p className="text-xs font-semibold text-slate-500">Do digital ao real</p>
+                  <p className="text-sm font-black text-[#062a57]">Em menos de 1 segundo</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
-          <p className="text-sm sm:text-base text-slate-400 mb-6 max-w-md">
-            Aponte a câmera do seu celular e teste o controle multivelocidade do Inversor de Frequência em tempo real.
-          </p>
+      {/* ================================================================
+          2. COMO FUNCIONA A MÁGICA — 3 PASSOS
+          ================================================================ */}
+      <section id="como-funciona" className="relative bg-[#eef2f7] text-slate-800 py-20 sm:py-28 scroll-mt-20">
+        <div aria-hidden className="absolute inset-0 bg-tech-grid-light" />
+        <div className="relative max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-14">
+            <span className="senai-stripe mb-5" />
+            <p className="section-eyebrow text-[#0b4f9c] justify-center mb-3">Passo a passo</p>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#062a57]">
+              Como funciona a mágica?
+            </h2>
+            <p className="mt-5 text-lg text-slate-600 leading-relaxed">
+              Pense no seu próprio corpo: você decide, o <strong className="text-[#0b4f9c]">cérebro</strong> manda
+              o recado e os <strong className="text-[#0b4f9c]">músculos</strong> se mexem. Aqui acontece a mesma coisa!
+            </p>
+          </div>
 
-          {/* MOLDURA ILUMINADA DO QR CODE */}
-          <div className="relative group p-6 rounded-3xl bg-slate-900/90 border-2 border-slate-700/80 shadow-2xl shadow-blue-500/10 hover:border-blue-500/50 transition-all duration-300">
-            {/* Glow de fundo */}
-            <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition duration-500" />
+          <div className="grid lg:grid-cols-[1fr_auto_1fr_auto_1fr] gap-6 lg:gap-4 items-stretch">
+            {/* Passo 1 */}
+            <article className="step-card">
+              <span className="step-number">01</span>
+              <div className="step-icon bg-[#0b4f9c]/10">📱</div>
+              <h3 className="text-xl font-black text-[#062a57] mb-2">Você dá a ordem</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Escaneie o QR Code e escolha: ligar, parar, girar para o outro lado ou
+                ir mais rápido. Seu celular envia esse recado pela internet.
+              </p>
+            </article>
 
-            {/* Container do QR Code com fundo branco de alto contraste para leitura rápida */}
-            <div className="relative bg-white p-5 rounded-2xl shadow-inner flex items-center justify-center">
-              {controlUrl ? (
-                <QRCodeSVG
-                  value={controlUrl}
-                  size={240}
-                  level="H"
-                  includeMargin={false}
-                  className="w-48 h-48 sm:w-60 sm:h-60"
+            <div aria-hidden className="hidden lg:flex items-center justify-center text-3xl text-[#e30613] flow-arrow">➜</div>
+
+            {/* Passo 2 */}
+            <article className="step-card">
+              <span className="step-number">02</span>
+              <div className="step-icon bg-[#e30613]/10">🧠</div>
+              <h3 className="text-xl font-black text-[#062a57] mb-2">O cérebro entende</h3>
+              <p className="text-slate-600 leading-relaxed">
+                Nossa placa eletrônica é o <strong>cérebro</strong> do sistema: recebe o
+                recado, entende o que você pediu e traduz para uma língua que a máquina
+                compreende.
+              </p>
+            </article>
+
+            <div aria-hidden className="hidden lg:flex items-center justify-center text-3xl text-[#e30613] flow-arrow">➜</div>
+
+            {/* Passo 3 */}
+            <article className="step-card">
+              <span className="step-number">03</span>
+              <div className="step-icon bg-[#0b4f9c]/10">⚙️</div>
+              <h3 className="text-xl font-black text-[#062a57] mb-2">Os músculos obedecem</h3>
+              <p className="text-slate-600 leading-relaxed">
+                A máquina é o <strong>músculo</strong>: recebe a ordem do cérebro e faz o
+                motor girar exatamente na velocidade que você escolheu. Na hora!
+              </p>
+            </article>
+          </div>
+
+          {/* Mídias ilustrativas */}
+          <div className="mt-14 grid sm:grid-cols-2 gap-6">
+            <MediaPlaceholder
+              kind="image"
+              label="Foto: a placa eletrônica (o cérebro)"
+              hint="Uma foto aproximada da placa montada pela turma no laboratório."
+            />
+            <MediaPlaceholder
+              kind="image"
+              label="Foto: a máquina e o motor (os músculos)"
+              hint="Bancada em funcionamento na feira."
+            >
+              {/* Demonstração visual com a arte oficial da bancada */}
+              <div className="relative w-full h-full group overflow-hidden">
+                <img
+                  src="/smartmotion_banner.jpg"
+                  alt="Bancada de Testes SmartMotion com Motor e Inversor"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                 />
-              ) : (
-                <div className="w-48 h-48 sm:w-60 sm:h-60 flex items-center justify-center text-slate-400 text-xs">
-                  Gerando QR Code...
-                </div>
-              )}
-            </div>
-
-            {/* Indicador de URL configurada */}
-            <div className="mt-4 flex flex-col items-center gap-1.5">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                <span className="truncate max-w-[240px] text-blue-400 font-semibold">{controlUrl || "Detectando..."}</span>
-                <button
-                  onClick={() => setIsEditingUrl(!isEditingUrl)}
-                  className="text-slate-500 hover:text-slate-300 text-[10px] underline underline-offset-2"
-                >
-                  {isEditingUrl ? "Fechar" : "Alterar IP/URL"}
-                </button>
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80" />
+                <span className="absolute bottom-3 left-4 text-xs font-bold text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                  Bancada SmartMotion em Laboratório
+                </span>
               </div>
-
-              {/* Formulário de alteração de URL */}
-              {isEditingUrl && (
-                <form onSubmit={handleSaveUrl} className="mt-2 flex items-center gap-2 w-full max-w-xs">
-                  <input
-                    type="url"
-                    value={customUrlInput}
-                    onChange={(e) => setCustomUrlInput(e.target.value)}
-                    placeholder="http://192.168.1.50:3000"
-                    className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
-                  />
-                  <button
-                    type="submit"
-                    className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold"
-                  >
-                    OK
-                  </button>
-                </form>
-              )}
-            </div>
+            </MediaPlaceholder>
           </div>
         </div>
+      </section>
 
-        {/* COLUNA DIREITA: TELEMETRIA EM TEMPO REAL DA BANCADA */}
-        <div className="flex-1 flex flex-col gap-4 max-w-lg w-full">
-          {/* CARD DE VELOCIDADE ATUAL DO MOTOR */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <div className="flex items-center justify-between mb-4">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Telemetria do Motor
-              </span>
-              <span
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                  isEmergencyActive
-                    ? "bg-red-500/20 text-red-400 border border-red-500/30 animate-pulse"
-                    : isPowerOn
-                    ? "bg-emerald-500/20 text-emerald-400 border border-emerald-500/30"
-                    : "bg-slate-800 text-slate-400 border border-slate-700"
-                }`}
-              >
-                {isEmergencyActive ? "EMERGÊNCIA ATIVA" : isPowerOn ? "MOTOR LIGADO" : "MOTOR PARADO"}
-              </span>
-            </div>
+      {/* ================================================================
+          3. ÁREA INTERATIVA — PAINEL DE CONTROLE
+          (QR Code e painel ao vivo originais, encaixados sem alterações)
+          ================================================================ */}
+      <section id="experimente" className="relative bg-[#020617] py-20 sm:py-28 scroll-mt-20 overflow-hidden">
+        <div aria-hidden className="absolute inset-0 bg-tech-grid opacity-60" />
+        <div aria-hidden className="absolute -top-40 left-1/2 -translate-x-1/2 h-[500px] w-[900px] rounded-full bg-[#0b4f9c]/25 blur-3xl" />
 
-            <div className="flex items-center gap-4">
-              <div
-                className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl bg-gradient-to-br ${activeSpeedConfig.color} shadow-lg`}
-              >
-                {activeSpeedConfig.icon}
-              </div>
-              <div className="flex-1">
-                <div className="flex items-baseline gap-2">
-                  <h3 className="text-2xl font-black text-white">{activeSpeedConfig.label}</h3>
-                  <span className="text-sm font-semibold text-slate-400">
-                    (Velocidade {activeSpeedConfig.level})
-                  </span>
-                </div>
-                <p className="text-xs text-slate-400 mt-0.5">
-                  Giro: <strong className="text-slate-200">{currentDirection === "FWD" ? "Horário" : "Anti-horário"}</strong>, 
-                  Frequência ajustada para aprox.{" "}
-                  <strong className="text-slate-200">
-                    {activeSpeedConfig.rpm > 0 ? `${activeSpeedConfig.rpm} Hz/RPM` : "0 (Repouso)"}
-                  </strong>
-                </p>
-              </div>
-            </div>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <span className="senai-stripe mb-5" />
+            <p className="section-eyebrow text-[#7fb2ff] justify-center mb-3">Área interativa</p>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-white">
+              Agora é a sua vez!
+            </h2>
+            <p className="mt-5 text-lg text-slate-300 leading-relaxed">
+              Aponte a câmera do celular para o QR Code e assuma o comando.
+              Ao lado, você acompanha ao vivo tudo o que a máquina está fazendo.
+            </p>
           </div>
 
-          {/* CARD DE ESTADO DOS 4 RELÉS (Active LOW do Arduino) */}
-          <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-                Lógica dos Relés (Entradas Digitais DI)
-              </span>
-              <span className="text-[10px] font-mono text-slate-500">Active LOW</span>
-            </div>
+          {/* Moldura futurista do painel */}
+          <div className="control-shell">
+            <div className="control-shell__inner">
+              <div aria-hidden className="scanline" />
+              <span aria-hidden className="control-corner control-corner--tl" />
+              <span aria-hidden className="control-corner control-corner--tr" />
+              <span aria-hidden className="control-corner control-corner--bl" />
+              <span aria-hidden className="control-corner control-corner--br" />
 
-            <div className="grid grid-cols-4 gap-2.5">
-              {[
-                { name: "R1", pin: "Pin 2", role: "DI1 (Energia)", on: arduinoStatus?.r1 ?? false },
-                { name: "R2", pin: "Pin 3", role: "DI2 (Giro)", on: arduinoStatus?.r2 ?? false },
-                { name: "R3", pin: "Pin 4", role: "DI3 (Multisp 1)", on: arduinoStatus?.r3 ?? false },
-                { name: "R4", pin: "Pin 5", role: "DI4 (Multisp 2)", on: arduinoStatus?.r4 ?? false },
-              ].map((relay) => (
-                <div
-                  key={relay.name}
-                  className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-all duration-300 ${
-                    relay.on
-                      ? "bg-emerald-500/15 border-emerald-400/80 shadow-lg shadow-emerald-500/20"
-                      : "bg-slate-800/50 border-slate-700/80"
-                  }`}
-                >
+              <div className="control-shell__bar">
+                <span className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-[#e30613] animate-pulse" />
+                  Painel de Controle SmartMotion
+                </span>
+                <span className="hidden sm:inline text-slate-500">Bancada interativa • Ao vivo</span>
+              </div>
+
+              {/* CONTEÚDO ORIGINAL DA BANCADA */}
+              <div className="relative flex flex-col lg:flex-row items-center lg:items-stretch justify-center gap-8 px-4 py-10 sm:px-10 sm:py-12">
+                {/* COLUNA ESQUERDA: QR CODE GIGANTE PARA VISITANTES */}
+                <div className="flex-1 flex flex-col items-center justify-center text-center max-w-lg w-full">
+                  {/* Badge Chamativa */}
+                  <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#e30613]/15 border border-[#e30613]/40 text-red-200 text-xs font-bold uppercase tracking-wider mb-4 animate-pulse">
+                    <span>📱 Use o seu celular</span>
+                  </div>
+
+                  <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight mb-2">
+                    Escaneie e assuma o controle!
+                  </h2>
+
+                  <p className="text-sm sm:text-base text-slate-300 mb-6 max-w-md">
+                    Aponte a câmera para o código abaixo. Em segundos, o seu celular vira o
+                    controle remoto da máquina.
+                  </p>
+
+                  {/* MOLDURA ILUMINADA DO QR CODE */}
+                  <div className="relative group p-6 rounded-3xl bg-slate-900/90 border-2 border-slate-700/80 shadow-2xl shadow-blue-500/10 hover:border-blue-500/50 transition-all duration-300">
+                    {/* Glow de fundo */}
+                    <div className="absolute -inset-1 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-3xl blur-xl opacity-20 group-hover:opacity-40 transition duration-500" />
+
+                    {/* Container do QR Code com fundo branco de alto contraste para leitura rápida */}
+                    <div className="relative bg-white p-5 rounded-2xl shadow-inner flex items-center justify-center">
+                      {controlUrl ? (
+                        <QRCodeSVG
+                          value={controlUrl}
+                          size={240}
+                          level="H"
+                          includeMargin={false}
+                          className="w-48 h-48 sm:w-60 sm:h-60"
+                        />
+                      ) : (
+                        <div className="w-48 h-48 sm:w-60 sm:h-60 flex items-center justify-center text-slate-400 text-xs">
+                          Gerando QR Code...
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Indicador de URL configurada */}
+                    <div className="mt-4 flex flex-col items-center gap-1.5">
+                      <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                        <span className="truncate max-w-[240px] text-blue-400 font-semibold">{controlUrl || "Detectando..."}</span>
+                        <button
+                          onClick={() => setIsEditingUrl(!isEditingUrl)}
+                          className="text-slate-500 hover:text-slate-300 text-[10px] underline underline-offset-2"
+                        >
+                          {isEditingUrl ? "Fechar" : "Alterar IP/URL"}
+                        </button>
+                      </div>
+
+                      {/* Formulário de alteração de URL */}
+                      {isEditingUrl && (
+                        <form onSubmit={handleSaveUrl} className="mt-2 flex items-center gap-2 w-full max-w-xs">
+                          <input
+                            type="url"
+                            value={customUrlInput}
+                            onChange={(e) => setCustomUrlInput(e.target.value)}
+                            placeholder="http://192.168.1.50:3000"
+                            className="flex-1 bg-slate-800 border border-slate-700 rounded-lg px-2.5 py-1 text-xs text-white focus:outline-none focus:border-blue-500"
+                          />
+                          <button
+                            type="submit"
+                            className="px-3 py-1 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-bold"
+                          >
+                            OK
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* COLUNA DIREITA: A MÁQUINA AO VIVO (linguagem simples para o público) */}
+                <div className="flex-1 flex flex-col gap-4 max-w-lg w-full">
+                  {/* CARD PRINCIPAL: COMO A MÁQUINA ESTÁ AGORA */}
                   <div
-                    className={`w-3.5 h-3.5 rounded-full mb-1.5 transition-all ${
-                      relay.on ? "bg-emerald-400 shadow-md shadow-emerald-400 animate-pulse" : "bg-slate-700"
-                    }`}
-                  />
-                  <span className={`text-xs font-black ${relay.on ? "text-emerald-300" : "text-slate-400"}`}>
-                    {relay.name}
-                  </span>
-                  <span className="text-[9px] font-mono text-slate-500">{relay.pin}</span>
-                  <span
-                    className={`text-[9px] font-bold mt-1 px-1.5 py-0.2 rounded ${
-                      relay.on ? "bg-emerald-400/20 text-emerald-300" : "bg-slate-800 text-slate-500"
+                    className={`relative overflow-hidden rounded-3xl border p-6 shadow-xl transition-all duration-500 ${
+                      isEmergencyActive
+                        ? "bg-red-950/60 border-red-500/60 shadow-red-900/40"
+                        : isPowerOn
+                        ? "bg-emerald-950/40 border-emerald-500/40 shadow-emerald-900/30"
+                        : "bg-slate-900/90 border-slate-800"
                     }`}
                   >
-                    {relay.on ? "ON" : "OFF"}
-                  </span>
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400">A máquina agora</p>
+
+                    <div className="mt-3 flex items-center gap-4">
+                      <div
+                        className={`flex h-20 w-20 shrink-0 items-center justify-center rounded-3xl text-4xl shadow-lg ${
+                          isEmergencyActive
+                            ? "bg-red-600 animate-pulse"
+                            : isPowerOn
+                            ? `bg-gradient-to-br ${activeSpeedConfig.color}`
+                            : "bg-slate-800"
+                        }`}
+                      >
+                        <span className={isPowerOn && !isEmergencyActive ? "inline-block animate-spin [animation-duration:2.5s]" : ""}>
+                          {isEmergencyActive ? "🛑" : isPowerOn ? "⚙️" : "😴"}
+                        </span>
+                      </div>
+                      <div>
+                        <h3 className="text-3xl font-black text-white leading-tight">
+                          {isEmergencyActive ? "Parada de segurança" : isPowerOn ? "Trabalhando!" : "Descansando"}
+                        </h3>
+                        <p className="mt-1 text-sm text-slate-300">
+                          {isEmergencyActive
+                            ? "Alguém apertou o botão de emergência. Tudo parado por segurança."
+                            : isPowerOn
+                            ? "O motor está girando e obedecendo ao seu comando."
+                            : "Esperando alguém escanear o código e dar a primeira ordem."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* CARD: VELOCIDADE E SENTIDO */}
+                  <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-bold uppercase tracking-widest text-slate-400">Velocidade escolhida</p>
+                      <p className="text-sm font-black text-white">
+                        {activeSpeedConfig.icon} {activeSpeedConfig.label}
+                      </p>
+                    </div>
+
+                    {/* Medidor de velocidade em barras */}
+                    <div className="mt-4 grid grid-cols-4 gap-2 items-end h-16">
+                      {SPEED_CONFIG.map((s, idx) => {
+                        const lit = isPowerOn && !isEmergencyActive && s.level <= activeSpeedConfig.level;
+                        return (
+                          <div key={s.level} className="flex flex-col items-center gap-1.5">
+                            <div
+                              className={`w-full rounded-lg transition-all duration-500 ${
+                                lit ? `bg-gradient-to-t ${s.color} shadow-lg ${s.glowColor}` : "bg-slate-800"
+                              }`}
+                              style={{ height: `${(idx + 1) * 25}%`, minHeight: "0.75rem" }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="mt-2 grid grid-cols-4 gap-2 text-center text-[11px] font-semibold text-slate-400">
+                      {SPEED_CONFIG.map((s) => (
+                        <span key={s.level} className={s.level === activeSpeedConfig.level ? "text-white" : ""}>
+                          {s.icon} {s.label}
+                        </span>
+                      ))}
+                    </div>
+
+                    <div className="mt-5 flex items-center gap-3 rounded-2xl bg-slate-800/60 px-4 py-3">
+                      <span
+                        className={`text-2xl inline-block transition-transform duration-500 ${
+                          currentDirection === "FWD" ? "" : "-scale-x-100"
+                        }`}
+                      >
+                        🔃
+                      </span>
+                      <p className="text-sm text-slate-300">
+                        Girando para a{" "}
+                        <strong className="text-white">
+                          {currentDirection === "FWD" ? "direita (como o relógio)" : "esquerda (contra o relógio)"}
+                        </strong>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* CARD: O CAMINHO DA MENSAGEM (celular → cérebro → máquina) */}
+                  <div className="rounded-3xl border border-slate-800 bg-slate-900/90 p-6 shadow-xl">
+                    <p className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-4">O caminho da sua ordem</p>
+                    <div className="flex items-stretch justify-between gap-2">
+                      {[
+                        { icon: "📱", title: "Celular", desc: firebaseConnected ? "Pedidos chegando" : "Aguardando", on: firebaseConnected },
+                        { icon: "🧠", title: "Cérebro", desc: isConnected ? "Placa conectada" : "Placa desligada", on: isConnected },
+                        { icon: "⚙️", title: "Máquina", desc: isPowerOn && !isEmergencyActive ? "Em movimento" : "Parada", on: isPowerOn && !isEmergencyActive },
+                      ].map((node, i) => (
+                        <div key={node.title} className="flex flex-1 items-center gap-2">
+                          <div
+                            className={`flex flex-1 flex-col items-center rounded-2xl border px-2 py-3 text-center transition-all duration-500 ${
+                              node.on
+                                ? "border-[#3d8bfd]/60 bg-[#0b4f9c]/25 shadow-lg shadow-blue-500/20"
+                                : "border-slate-700/80 bg-slate-800/40 opacity-60"
+                            }`}
+                          >
+                            <span className="text-2xl">{node.icon}</span>
+                            <span className="mt-1 text-xs font-black text-white">{node.title}</span>
+                            <span className="text-[10px] text-slate-400">{node.desc}</span>
+                          </div>
+                          {i < 2 && <span className="flow-arrow text-[#e30613] font-black">➜</span>}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* DETALHES TÉCNICOS — recolhido por padrão, para uso da equipe */}
+                  <details className="group rounded-2xl border border-slate-800/80 bg-slate-900/60 p-4 text-xs">
+                    <summary className="cursor-pointer list-none flex items-center justify-between font-semibold text-slate-500 hover:text-slate-300">
+                      <span>🔧 Detalhes técnicos (equipe)</span>
+                      <span className="transition-transform group-open:rotate-180">▾</span>
+                    </summary>
+
+                    <div className="mt-4 grid grid-cols-4 gap-2">
+                      {[
+                        { name: "R1", on: arduinoStatus?.r1 ?? false },
+                        { name: "R2", on: arduinoStatus?.r2 ?? false },
+                        { name: "R3", on: arduinoStatus?.r3 ?? false },
+                        { name: "R4", on: arduinoStatus?.r4 ?? false },
+                      ].map((relay) => (
+                        <div
+                          key={relay.name}
+                          className={`flex flex-col items-center rounded-lg border py-2 ${
+                            relay.on ? "border-emerald-400/70 bg-emerald-500/10 text-emerald-300" : "border-slate-700 bg-slate-800/50 text-slate-500"
+                          }`}
+                        >
+                          <span className="font-black">{relay.name}</span>
+                          <span className="text-[10px]">{relay.on ? "ON" : "OFF"}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="mt-3 flex flex-col gap-1.5 font-mono text-[11px]">
+                      <p className="text-slate-500">
+                        Último envio: <span className="text-blue-400">{lastSentCommand || "—"}</span>
+                      </p>
+                      <p className="truncate text-slate-500">
+                        Retorno: <span className="text-slate-300">{arduinoStatus?.raw || "—"}</span>
+                      </p>
+                    </div>
+                  </details>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
 
-          {/* CARD DE INFORMAÇÕES DA PONTE */}
-          <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 flex flex-col gap-2 text-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-semibold">Último Comando Despachado:</span>
-              <span className="font-mono text-blue-400 font-bold bg-blue-500/10 px-2 py-0.5 rounded border border-blue-500/20">
-                {lastSentCommand || "Nenhum comando enviado ainda"}
-              </span>
-            </div>
+          {/* Mini-guia para o visitante */}
+          <ol className="mt-10 grid sm:grid-cols-3 gap-4 text-sm">
+            <li className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e30613] font-black text-white">1</span>
+              <span className="text-slate-200">Abra a <strong className="text-white">câmera</strong> do seu celular</span>
+            </li>
+            <li className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e30613] font-black text-white">2</span>
+              <span className="text-slate-200">Aponte para o <strong className="text-white">QR Code</strong> e toque no link</span>
+            </li>
+            <li className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-4">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e30613] font-black text-white">3</span>
+              <span className="text-slate-200">Pronto! <strong className="text-white">Comande a máquina</strong> e veja ela obedecer</span>
+            </li>
+          </ol>
 
-            <div className="flex items-center justify-between">
-              <span className="text-slate-400 font-semibold">Telemetria Arduino (Raw):</span>
-              <span className="font-mono text-slate-300 text-[11px] truncate max-w-[240px]">
-                {arduinoStatus?.raw || "Aguardando resposta do Arduino..."}
-              </span>
-            </div>
+          {/* Console técnico (oculto por padrão, aberto pelo botão do cabeçalho) */}
+          {showConsole && (
+            <div className="mt-8 overflow-hidden rounded-2xl border border-slate-800">
+              <aside className="w-full bg-slate-900 border-t border-slate-800 px-6 py-4 max-h-64 flex flex-col animate-fade-in-up">
+                <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-slate-300">Terminal de Comunicação Serial (115200 baud)</span>
+                    <span className="text-slate-500">({logs.length} registros)</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={clearLogs}
+                      className="text-[11px] text-slate-400 hover:text-white underline underline-offset-2"
+                    >
+                      Limpar Logs
+                    </button>
+                    <button
+                      onClick={() => setShowConsole(false)}
+                      className="text-slate-400 hover:text-white font-bold"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </div>
 
-            <div className="flex items-center justify-between pt-1 border-t border-slate-800">
-              <span className="text-slate-400 font-semibold">Segurança de Comunicação:</span>
-              <span className="text-emerald-400 flex items-center gap-1 font-medium text-[11px]">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" /> Watchdog Ativo (5s)
-              </span>
+                <div className="flex-1 overflow-y-auto font-mono text-xs space-y-1 pr-2 max-h-40">
+                  {logs.length === 0 ? (
+                    <p className="text-slate-600 italic">Nenhum evento registrado ainda.</p>
+                  ) : (
+                    logs.map((log) => (
+                      <div key={log.id} className="flex items-start gap-2">
+                        <span className="text-slate-600 text-[10px] select-none">[{log.timestamp}]</span>
+                        <span
+                          className={`font-bold select-none ${
+                            log.type === "in"
+                              ? "text-emerald-400"
+                              : log.type === "out"
+                              ? "text-blue-400"
+                              : log.type === "error"
+                              ? "text-red-400"
+                              : "text-amber-400"
+                          }`}
+                        >
+                          {log.type === "in" ? "RX ←" : log.type === "out" ? "TX →" : "LOG •"}
+                        </span>
+                        <span
+                          className={`${
+                            log.type === "error" ? "text-red-300" : log.type === "in" ? "text-emerald-200" : "text-slate-300"
+                          }`}
+                        >
+                          {log.text}
+                        </span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              </aside>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ================================================================
+          4. A IMPORTÂNCIA DA ELETRÔNICA DE MANUTENÇÃO
+          ================================================================ */}
+      <section id="eletronica" className="relative class-badge text-white py-20 sm:py-28 scroll-mt-20 overflow-hidden">
+        <div aria-hidden className="absolute inset-0 bg-tech-grid" />
+        <div aria-hidden className="absolute -right-32 -bottom-32 h-96 w-96 rounded-full bg-[#e30613]/25 blur-3xl" />
+
+        <div className="relative max-w-6xl mx-auto px-6">
+          <div className="max-w-4xl">
+            <p className="section-eyebrow text-white/70 mb-6">
+              <span className="senai-stripe" /> A ponte entre dois mundos
+            </p>
+            <blockquote className="text-3xl sm:text-5xl font-black leading-tight tracking-tight">
+              “Sem a eletrônica, os comandos digitais{" "}
+              <span className="text-[#ffb3b8]">nunca ganhariam vida</span> no mundo real.”
+            </blockquote>
+            <p className="mt-8 text-lg sm:text-xl text-blue-100/90 leading-relaxed max-w-3xl">
+              O celular só fala a língua do mundo digital. O motor só entende força e
+              movimento. A <strong className="text-white">Eletrônica de Manutenção</strong> é
+              quem une esses dois mundos — e mantém tudo funcionando nas fábricas, nos
+              hospitais, nos carros e até dentro da sua casa.
+            </p>
+          </div>
+
+          <div className="mt-14 grid sm:grid-cols-3 gap-5">
+            <div className="rounded-3xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+              <div className="text-4xl mb-4">🔌</div>
+              <h3 className="text-xl font-black mb-2">Conecta</h3>
+              <p className="text-blue-100/85 leading-relaxed">Liga o mundo digital ao mundo físico, como uma ponte.</p>
+            </div>
+            <div className="rounded-3xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+              <div className="text-4xl mb-4">🛡️</div>
+              <h3 className="text-xl font-black mb-2">Protege</h3>
+              <p className="text-blue-100/85 leading-relaxed">Garante que tudo funcione com segurança, com parada de emergência sempre à mão.</p>
+            </div>
+            <div className="rounded-3xl border border-white/15 bg-white/10 p-7 backdrop-blur-sm">
+              <div className="text-4xl mb-4">🔧</div>
+              <h3 className="text-xl font-black mb-2">Mantém</h3>
+              <p className="text-blue-100/85 leading-relaxed">Encontra e resolve problemas para que as máquinas nunca parem.</p>
             </div>
           </div>
         </div>
-      </main>
+      </section>
 
-      {/* PAINEL INFERIOR: CONSOLE SERIAL (COLAPSÁVEL) */}
-      {showConsole && (
-        <aside className="w-full bg-slate-900 border-t border-slate-800 px-6 py-4 max-h-64 flex flex-col animate-fade-in-up">
-          <div className="flex items-center justify-between pb-2 mb-2 border-b border-slate-800 text-xs">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-slate-300">Terminal de Comunicação Serial (115200 baud)</span>
-              <span className="text-slate-500">({logs.length} registros)</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={clearLogs}
-                className="text-[11px] text-slate-400 hover:text-white underline underline-offset-2"
-              >
-                Limpar Logs
-              </button>
-              <button
-                onClick={() => setShowConsole(false)}
-                className="text-slate-400 hover:text-white font-bold"
-              >
-                ✕
-              </button>
-            </div>
+      {/* ================================================================
+          5. QUEM SOMOS — A TURMA
+          ================================================================ */}
+      <section id="quem-somos" className="relative bg-white text-slate-800 py-20 sm:py-28 scroll-mt-20">
+        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          {/* Foto da turma */}
+          <div className="relative">
+            <div aria-hidden className="absolute -top-4 -left-4 h-full w-full rounded-[1.75rem] bg-[#e30613]/90" />
+            <MediaPlaceholder
+              kind="group"
+              label="Foto da turma"
+              hint="Os alunos que tornaram este projeto realidade."
+              aspectClassName="aspect-[4/3]"
+              className="relative bg-white shadow-2xl shadow-slate-900/20"
+            />
           </div>
 
-          <div className="flex-1 overflow-y-auto font-mono text-xs space-y-1 pr-2 max-h-40">
-            {logs.length === 0 ? (
-              <p className="text-slate-600 italic">Nenhum evento registrado ainda.</p>
-            ) : (
-              logs.map((log) => (
-                <div key={log.id} className="flex items-start gap-2">
-                  <span className="text-slate-600 text-[10px] select-none">[{log.timestamp}]</span>
-                  <span
-                    className={`font-bold select-none ${
-                      log.type === "in"
-                        ? "text-emerald-400"
-                        : log.type === "out"
-                        ? "text-blue-400"
-                        : log.type === "error"
-                        ? "text-red-400"
-                        : "text-amber-400"
-                    }`}
-                  >
-                    {log.type === "in" ? "RX ←" : log.type === "out" ? "TX →" : "LOG •"}
-                  </span>
-                  <span
-                    className={`${
-                      log.type === "error" ? "text-red-300" : log.type === "in" ? "text-emerald-200" : "text-slate-300"
-                    }`}
-                  >
-                    {log.text}
-                  </span>
-                </div>
-              ))
-            )}
-          </div>
-        </aside>
-      )}
+          <div>
+            <span className="senai-stripe mb-5" />
+            <p className="section-eyebrow text-[#0b4f9c] mb-3">Quem somos</p>
+            <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#062a57]">
+              Os autores dessa mágica
+            </h2>
 
-      {/* RODAPÉ INFORMATIVO */}
-      <footer className="w-full bg-slate-950/80 border-t border-slate-900 px-6 py-2.5 flex flex-wrap items-center justify-between text-xs text-slate-500 gap-2">
-        <p>Desenvolvido para apresentação no Mundo SENAI • SENAI Timbó</p>
-        <div className="flex items-center gap-4">
-          <Link href="/" className="text-blue-400 hover:underline">
-            Abrir Controle Mobile (Visitante) →
-          </Link>
+            <div className="mt-6 inline-block rounded-2xl class-badge px-6 py-4 text-white shadow-xl shadow-blue-900/20">
+              <p className="text-xs font-bold uppercase tracking-widest text-white/70">Turma</p>
+              <p className="text-lg sm:text-xl font-black leading-snug">
+                Aprendizagem Industrial de Eletrônico de Manutenção Industrial
+              </p>
+            </div>
+
+            <p className="mt-6 text-lg text-slate-600 leading-relaxed">
+              Somos estudantes do SENAI que transformaram curiosidade em tecnologia.
+              Este projeto foi pensado, montado e testado por nós, unindo o que
+              aprendemos em sala de aula com a prática do laboratório.
+            </p>
+
+            <ul className="mt-8 grid grid-cols-3 gap-3 text-center">
+              <li className="rounded-2xl bg-[#eef2f7] px-3 py-5">
+                <div className="text-2xl mb-1">💡</div>
+                <p className="text-sm font-bold text-[#062a57]">Pensado</p>
+              </li>
+              <li className="rounded-2xl bg-[#eef2f7] px-3 py-5">
+                <div className="text-2xl mb-1">🛠️</div>
+                <p className="text-sm font-bold text-[#062a57]">Montado</p>
+              </li>
+              <li className="rounded-2xl bg-[#eef2f7] px-3 py-5">
+                <div className="text-2xl mb-1">✅</div>
+                <p className="text-sm font-bold text-[#062a57]">Testado</p>
+              </li>
+            </ul>
+
+            <p className="mt-8 border-l-4 border-[#e30613] pl-4 text-slate-600">
+              <strong className="text-[#062a57]">Gostou?</strong> Você também pode estudar aqui!
+              Converse com a nossa equipe sobre os cursos do SENAI.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ================================================================
+          RODAPÉ — ORGULHO DA TURMA
+          ================================================================ */}
+      <footer className="relative w-full bg-[#04172f] text-slate-300">
+        <div aria-hidden className="h-1.5 w-full bg-gradient-to-r from-[#e30613] via-[#e30613] to-[#0b4f9c]" />
+        <div className="max-w-7xl mx-auto px-6 py-12 grid md:grid-cols-[1.5fr_1fr] gap-8 items-center">
+          <div>
+            <p className="text-sm font-semibold uppercase tracking-widest text-slate-400">Feito com orgulho por</p>
+            <p className="mt-2 text-2xl sm:text-3xl font-black text-white leading-tight">
+              Turma de Aprendizagem Industrial de{" "}
+              <span className="text-[#7fb2ff]">Eletrônico de Manutenção Industrial</span>
+            </p>
+            <p className="mt-3 text-sm text-slate-400">Desenvolvido para apresentação no Mundo SENAI • SENAI Timbó</p>
+          </div>
+          <div className="flex flex-col items-start md:items-end gap-4 text-sm">
+            <span className="flex items-center rounded-md bg-[#e30613] px-3 py-1.5 text-lg font-black italic tracking-tight text-white">
+              SENAI
+            </span>
+            <Link href="/" className="text-blue-400 hover:underline">
+              Abrir Controle Mobile (Visitante) →
+            </Link>
+          </div>
         </div>
       </footer>
+
+      {/* BOTÃO FLUTUANTE DE ACESSO RÁPIDO AO QR CODE (Ideal durante a feira para o apresentador) */}
+      <a
+        href="#experimente"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#e30613] hover:bg-[#c70511] text-white text-xs font-black uppercase tracking-wider shadow-2xl shadow-red-600/50 hover:scale-105 active:scale-95 transition-all border border-white/20 backdrop-blur-md"
+        title="Rolar direto para o QR Code"
+      >
+        <span className="text-sm">📱</span>
+        <span>QR Code ao Vivo</span>
+      </a>
     </div>
   );
 }
