@@ -417,10 +417,19 @@ export default function DashboardBancadaPage() {
                 kind="video"
                 tone="dark"
                 label="Vídeo: o motor acelerando e desacelerando"
-                hint="Insira aqui um vídeo curto em loop gravado no laboratório."
+                hint="Vídeo do motor em funcionamento no laboratório."
                 aspectClassName="aspect-[4/3]"
                 className="shadow-2xl shadow-black/40"
-              />
+              >
+                <video
+                  src="/media/motor-loop.mp4"
+                  autoPlay
+                  muted
+                  loop
+                  playsInline
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </MediaPlaceholder>
               <div className="absolute -bottom-5 -left-4 sm:-left-8 flex items-center gap-3 rounded-2xl bg-white px-4 py-3 text-slate-900 shadow-xl">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#e30613] text-xl">⚡</span>
                 <div className="leading-tight">
