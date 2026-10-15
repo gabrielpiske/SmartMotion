@@ -16,6 +16,36 @@ export interface MotorControlCommand {
   speed: SpeedLevel;
   emergency: EmergencyState;
   timestamp: number; // Date.now() - para ordering e debug
+  /** Token da sessão (link do QR Code) que gerou o comando */
+  session?: string;
+  /** "bridge" quando o próprio painel da bancada gera o comando (ex.: parada ao trocar de visitante) */
+  source?: "visitor" | "bridge";
+}
+
+/**
+ * Sessão de acesso do visitante — nó /motorControl/session.
+ * Cada QR Code contém um token único. O painel da bancada só repassa ao Arduino
+ * comandos com o token da sessão atual, ativa e dentro do prazo.
+ */
+export interface ControlSession {
+  token: string;
+  active: boolean;
+  /** Duração do acesso, em milissegundos */
+  durationMs: number;
+  createdAt: number;
+  /** Momento do primeiro comando do visitante (o cronômetro começa aqui) */
+  startedAt: number | null;
+  expiresAt: number | null;
+}
+
+export const SESSION_PATH = "motorControl/session";
+
+/** Gera um token curto e aleatório para o link do QR Code */
+export function generateSessionToken(length = 10): string {
+  const alphabet = "abcdefghijkmnpqrstuvwxyz23456789";
+  const bytes = new Uint8Array(length);
+  crypto.getRandomValues(bytes);
+  return Array.from(bytes, (b) => alphabet[b % alphabet.length]).join("");
 }
 
 /** Metadados de cada velocidade para a UI */

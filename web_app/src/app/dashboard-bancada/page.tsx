@@ -7,6 +7,7 @@ import Link from "next/link";
 import { getFirebaseDatabase } from "@/lib/firebase";
 import { useWebSerial } from "@/hooks/useWebSerial";
 import MediaPlaceholder from "@/components/MediaPlaceholder";
+import { useVisitorSession, SESSION_DURATION_OPTIONS } from "@/hooks/useVisitorSession";
 import {
   type MotorControlCommand,
   type MotorControlStatus,
@@ -28,6 +29,12 @@ const fromHardwareSpeed = (hwSpeed: number): SpeedLevel => {
   if (hwSpeed === 2) return 3;
   if (hwSpeed === 3) return 2;
   return (hwSpeed >= 1 && hwSpeed <= 4 ? hwSpeed : 1) as SpeedLevel;
+};
+
+// Formata milissegundos como m:ss (contagem regressiva do visitante)
+const formatDuration = (ms: number): string => {
+  const total = Math.ceil(ms / 1000);
+  return `${Math.floor(total / 60)}:${(total % 60).toString().padStart(2, "0")}`;
 };
 
 export default function DashboardBancadaPage() {
@@ -103,6 +110,26 @@ export default function DashboardBancadaPage() {
     }
   }, [lastCommand]);
 
+  // CONTROLE DE ACESSO DOS VISITANTES (link temporário do QR Code)
+  const visitorSession = useVisitorSession({
+    getCurrentState: () => ({
+      direction: currentDirectionRef.current,
+      speed: currentSpeedRef.current,
+      emergency: currentEmergencyRef.current,
+    }),
+  });
+  const { session, remainingMs, settings: sessionSettings, updateSettings, newSession, endSession, extendSession } = visitorSession;
+
+  const lastValidCommandRef = useRef<MotorControlCommand | null>(null);
+  const isCommandAllowedRef = useRef(visitorSession.isCommandAllowed);
+  const registerVisitorCommandRef = useRef(visitorSession.registerVisitorCommand);
+  const currentSessionTokenRef = useRef<string | null>(null);
+  useEffect(() => {
+    isCommandAllowedRef.current = visitorSession.isCommandAllowed;
+    registerVisitorCommandRef.current = visitorSession.registerVisitorCommand;
+    currentSessionTokenRef.current = session?.token ?? null;
+  }, [visitorSession.isCommandAllowed, visitorSession.registerVisitorCommand, session]);
+
   // Detecta URL do app para o QR Code
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -144,11 +171,37 @@ export default function DashboardBancadaPage() {
           setFirebaseConnected(true);
           if (snapshot.exists()) {
             const cmd = snapshot.val() as MotorControlCommand;
+
+            // CONTROLE DE ACESSO: só aceita comandos do link (QR Code) atual e dentro do prazo
+            if (!isCommandAllowedRef.current(cmd)) {
+              if (cmd.timestamp && cmd.timestamp > lastProcessedTimestampRef.current) {
+                lastProcessedTimestampRef.current = cmd.timestamp;
+                // Desfaz a alteração no Firebase restaurando o último comando válido
+                const token = currentSessionTokenRef.current;
+                if (token) {
+                  const base = lastValidCommandRef.current;
+                  const restored: MotorControlCommand = {
+                    power: base?.power ?? false,
+                    direction: base?.direction ?? "FWD",
+                    speed: base?.speed ?? 1,
+                    emergency: base?.emergency ?? "CLEAR",
+                    timestamp: Date.now(),
+                    session: token,
+                    source: "bridge",
+                  };
+                  set(ref(db, "motorControl/command"), restored).catch(console.error);
+                }
+              }
+              return;
+            }
+
+            lastValidCommandRef.current = cmd;
             setLastCommand(cmd);
 
             // Verifica se este comando já foi despachado
             if (cmd.timestamp && cmd.timestamp > lastProcessedTimestampRef.current) {
               lastProcessedTimestampRef.current = cmd.timestamp;
+              registerVisitorCommandRef.current(cmd); // inicia o cronômetro no 1º comando
 
               if (isConnected) {
                 // Lógica de despacho para o Arduino
@@ -246,6 +299,12 @@ export default function DashboardBancadaPage() {
   const currentDirection = arduinoStatus
     ? arduinoStatus.direction
     : lastCommand?.direction ?? "FWD";
+
+  // Link do QR Code: URL base + token da sessão atual do visitante
+  const qrValue =
+    controlUrl && session?.active
+      ? `${controlUrl.replace(/\/+$/, "")}/?s=${session.token}`
+      : "";
 
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 flex flex-col overflow-x-hidden font-sans select-none">
@@ -593,17 +652,26 @@ export default function DashboardBancadaPage() {
 
                     {/* Container do QR Code com fundo branco de alto contraste para leitura rápida */}
                     <div className="relative bg-white p-5 rounded-2xl shadow-inner flex items-center justify-center">
-                      {controlUrl ? (
+                      {qrValue ? (
                         <QRCodeSVG
-                          value={controlUrl}
+                          key={session?.token}
+                          value={qrValue}
                           size={240}
                           level="H"
                           includeMargin={false}
-                          className="w-48 h-48 sm:w-60 sm:h-60"
+                          className="w-48 h-48 sm:w-60 sm:h-60 animate-fade-in-up"
                         />
                       ) : (
-                        <div className="w-48 h-48 sm:w-60 sm:h-60 flex items-center justify-center text-slate-400 text-xs">
-                          Gerando QR Code...
+                        <div className="w-48 h-48 sm:w-60 sm:h-60 flex flex-col items-center justify-center gap-2 text-slate-500 text-sm font-semibold">
+                          {session && !session.active ? (
+                            <>
+                              <span className="text-4xl">🔒</span>
+                              Link encerrado
+                              <span className="text-xs font-normal text-slate-400">Gere um novo link abaixo</span>
+                            </>
+                          ) : (
+                            "Gerando QR Code..."
+                          )}
                         </div>
                       )}
                     </div>
@@ -611,7 +679,7 @@ export default function DashboardBancadaPage() {
                     {/* Indicador de URL configurada */}
                     <div className="mt-4 flex flex-col items-center gap-1.5">
                       <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-                        <span className="truncate max-w-[240px] text-blue-400 font-semibold">{controlUrl || "Detectando..."}</span>
+                        <span className="truncate max-w-[240px] text-blue-400 font-semibold">{qrValue || controlUrl || "Detectando..."}</span>
                         <button
                           onClick={() => setIsEditingUrl(!isEditingUrl)}
                           className="text-slate-500 hover:text-slate-300 text-[10px] underline underline-offset-2"
@@ -638,6 +706,114 @@ export default function DashboardBancadaPage() {
                           </button>
                         </form>
                       )}
+                    </div>
+                  </div>
+
+                  {/* TEMPO DO VISITANTE + CONTROLES DO OPERADOR */}
+                  <div className="mt-6 w-full max-w-sm rounded-2xl border border-slate-700/80 bg-slate-900/80 p-4 text-left">
+                    {/* Contagem regressiva */}
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">Tempo do visitante</p>
+                        <p
+                          className={`text-2xl font-black tabular-nums ${
+                            remainingMs !== null && remainingMs <= 30_000 ? "text-red-400 animate-pulse" : "text-white"
+                          }`}
+                        >
+                          {!session
+                            ? "—"
+                            : !session.active
+                            ? "Encerrado"
+                            : remainingMs !== null
+                            ? formatDuration(remainingMs)
+                            : formatDuration(session.durationMs)}
+                        </p>
+                        <p className="text-[11px] text-slate-400">
+                          {!session
+                            ? "Preparando link..."
+                            : !session.active
+                            ? "Nenhum celular consegue controlar agora."
+                            : remainingMs !== null
+                            ? "Visitante no controle"
+                            : "Aguardando o visitante escanear"}
+                        </p>
+                      </div>
+                      {session?.active && remainingMs !== null && (
+                        <button
+                          onClick={() => extendSession(60_000)}
+                          className="shrink-0 rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-200 hover:bg-slate-700 transition"
+                          title="Dar mais 1 minuto ao visitante atual"
+                        >
+                          +1 min
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Barra de progresso */}
+                    {session?.active && remainingMs !== null && (
+                      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-slate-800">
+                        <div
+                          className="h-full rounded-full bg-gradient-to-r from-[#e30613] to-[#3d8bfd] transition-all duration-1000"
+                          style={{ width: `${Math.min(100, (remainingMs / session.durationMs) * 100)}%` }}
+                        />
+                      </div>
+                    )}
+
+                    {/* Ações */}
+                    <div className="mt-4 grid grid-cols-2 gap-2">
+                      <button
+                        onClick={() => newSession()}
+                        className="rounded-lg bg-[#e30613] px-3 py-2 text-xs font-black text-white hover:bg-[#c70511] transition active:scale-95"
+                      >
+                        🔄 Novo link agora
+                      </button>
+                      <button
+                        onClick={() => endSession()}
+                        disabled={!session?.active}
+                        className="rounded-lg border border-slate-700 bg-slate-800 px-3 py-2 text-xs font-bold text-slate-300 hover:bg-slate-700 transition disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        🔒 Encerrar acesso
+                      </button>
+                    </div>
+
+                    {/* Configurações */}
+                    <div className="mt-4 space-y-2.5 border-t border-slate-800 pt-3 text-xs text-slate-300">
+                      <label className="flex items-center justify-between gap-2">
+                        <span>Duração de cada visitante</span>
+                        <select
+                          value={sessionSettings.durationMin}
+                          onChange={(e) => updateSettings({ durationMin: Number(e.target.value) })}
+                          className="rounded-md border border-slate-700 bg-slate-800 px-2 py-1 text-xs font-bold text-white focus:outline-none focus:border-blue-500"
+                        >
+                          {SESSION_DURATION_OPTIONS.map((min) => (
+                            <option key={min} value={min}>
+                              {min} min
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="flex items-center justify-between gap-2 cursor-pointer">
+                        <span>Gerar novo link sozinho quando o tempo acabar</span>
+                        <input
+                          type="checkbox"
+                          checked={sessionSettings.autoRenew}
+                          onChange={(e) => updateSettings({ autoRenew: e.target.checked })}
+                          className="h-4 w-4 accent-[#e30613]"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-2 cursor-pointer">
+                        <span>Desligar o motor ao trocar de visitante</span>
+                        <input
+                          type="checkbox"
+                          checked={sessionSettings.stopOnReset}
+                          onChange={(e) => updateSettings({ stopOnReset: e.target.checked })}
+                          className="h-4 w-4 accent-[#e30613]"
+                        />
+                      </label>
+                      <p className="text-[10px] text-slate-500 leading-relaxed">
+                        O tempo começa no primeiro comando do visitante. A parada de emergência
+                        funciona sempre, mesmo com link expirado.
+                      </p>
                     </div>
                   </div>
                 </div>
