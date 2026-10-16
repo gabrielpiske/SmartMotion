@@ -565,7 +565,21 @@ export default function DashboardBancadaPage() {
               kind="image"
               label="Foto: a placa eletrônica (o cérebro)"
               hint="Uma foto aproximada da placa montada pela turma no laboratório."
-            />
+            >
+              {/* Foto real do circuito eletrônico montado */}
+              <div className="relative w-full h-full group overflow-hidden">
+                <img
+                  src="/media/foto_circuito.jpg"
+                  alt="Circuito eletrônico e placa de controle SmartMotion montada em laboratório"
+                  className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 via-transparent to-transparent opacity-80" />
+                <span className="absolute bottom-3 left-4 text-xs font-bold text-white flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                  Circuito de Controle & Microcontrolador
+                </span>
+              </div>
+            </MediaPlaceholder>
             <MediaPlaceholder
               kind="image"
               label="Foto: a máquina e o motor (os músculos)"
