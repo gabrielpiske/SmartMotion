@@ -1118,27 +1118,15 @@ export default function DashboardBancadaPage() {
           5. QUEM SOMOS — A TURMA
           ================================================================ */}
       <section id="quem-somos" className="relative bg-white text-slate-800 py-20 sm:py-28 scroll-mt-20">
-        <div className="max-w-7xl mx-auto px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-          {/* Foto da turma */}
-          <div className="relative">
-            <div aria-hidden className="absolute -top-4 -left-4 h-full w-full rounded-[1.75rem] bg-[#e30613]/90" />
-            <MediaPlaceholder
-              kind="group"
-              label="Foto da turma"
-              hint="Os alunos que tornaram este projeto realidade."
-              aspectClassName="aspect-[4/3]"
-              className="relative bg-white shadow-2xl shadow-slate-900/20"
-            />
-          </div>
-
-          <div>
-            <span className="senai-stripe mb-5" />
-            <p className="section-eyebrow text-[#0b4f9c] mb-3">Quem somos</p>
+        <div className="max-w-4xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto">
+            <span className="senai-stripe mx-auto mb-5" />
+            <p className="section-eyebrow text-[#0b4f9c] justify-center mb-3">Quem somos</p>
             <h2 className="text-3xl sm:text-5xl font-black tracking-tight text-[#062a57]">
               Os autores dessa mágica
             </h2>
 
-            <div className="mt-6 inline-block rounded-2xl class-badge px-6 py-4 text-white shadow-xl shadow-blue-900/20">
+            <div className="mt-6 inline-block rounded-2xl class-badge px-6 py-4 text-white shadow-xl shadow-blue-900/20 text-left sm:text-center">
               <p className="text-xs font-bold uppercase tracking-widest text-white/70">Turma</p>
               <p className="text-lg sm:text-xl font-black leading-snug">
                 Aprendizagem Industrial de Eletrônico de Manutenção Industrial
@@ -1166,10 +1154,12 @@ export default function DashboardBancadaPage() {
               </li>
             </ul>
 
-            <p className="mt-8 border-l-4 border-[#e30613] pl-4 text-slate-600">
-              <strong className="text-[#062a57]">Gostou?</strong> Você também pode estudar aqui!
-              Converse com a nossa equipe sobre os cursos do SENAI.
-            </p>
+            <div className="mt-8 rounded-2xl bg-slate-50 border-l-4 border-[#e30613] p-5 text-left text-slate-600 shadow-sm">
+              <p>
+                <strong className="text-[#062a57]">Gostou?</strong> Você também pode estudar aqui!
+                Converse com a nossa equipe sobre os cursos do SENAI.
+              </p>
+            </div>
           </div>
         </div>
       </section>
